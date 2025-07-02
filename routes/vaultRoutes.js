@@ -4,6 +4,8 @@ const verifyToken = require('./verifyToken');
 const app = express();
 const port = 3000;
 
+const vaultDB = [];
+const blockchainLogs = [];
 // Middleware
 app.use(express.json());
 
