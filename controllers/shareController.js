@@ -3,6 +3,19 @@ const { verifyInvoicePaid } = require('../services/lightningService');
 const { encryptForRecipient } = require('../services/encryptionService');
 const { logAction } = require('../services/blockchainLogger');
 
+// Création d'un partage (ancienne logique, à migrer si besoin)
+const shareService = require('../services/shareService');
+
+exports.createShare = async (req, res, next) => {
+  try {
+    const result = await shareService.createShare(req.user.id, req.body);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Nouvelle logique confirmShare (paiement, chiffrement, blockchain)
 exports.confirmShare = async (req, res) => {
   try {
     const { keyId, invoiceId, recipientDid } = req.body;
@@ -60,6 +73,7 @@ exports.getReceivedShares = async (req, res) => {
   }
 };
 
+// Révocation d'un partage (nouvelle logique)
 exports.revokeShare = async (req, res) => {
   try {
     const { keyId, recipientDid } = req.body;
@@ -79,5 +93,25 @@ exports.revokeShare = async (req, res) => {
   } catch (error) {
     console.error('Erreur revokeShare:', error);
     res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+// Ancienne logique de révocation (à migrer ou supprimer si non utilisée)
+exports.legacyRevokeShare = async (req, res, next) => {
+  try {
+    await shareService.revokeShare(req.user.id, req.params.id);
+    res.sendStatus(204);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Ancienne logique de listing (à migrer ou supprimer si non utilisée)
+exports.listPaidShares = async (req, res, next) => {
+  try {
+    const shares = await shareService.listPaidShares(req.user.id);
+    res.json(shares);
+  } catch (err) {
+    next(err);
   }
 };
