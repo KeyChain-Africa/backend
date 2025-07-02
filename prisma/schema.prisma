@@ -1,0 +1,77 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  did            String    @unique
+  username       String
+  passwordHash   String
+  publicKey      String
+  masterKeyEnc   String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  theme          String    @default("light")
+  language       String    @default("fr")
+  
+  keys           VaultKey[]
+  sentShares     Share[]    @relation("SentShares")
+  receivedShares Share[]    @relation("ReceivedShares")
+
+  @@map("users")
+}
+
+model VaultKey {
+  id         String   @id @default(uuid())
+  userId     String
+  name       String
+  type       String   @default("password")
+  ciphertext String
+  iv         String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id])
+  shares     Share[]
+
+  @@map("vault_keys")
+}
+
+model Share {
+  id            String   @id @default(uuid())
+  keyId         String
+  senderId      String
+  recipientDid  String
+  invoice       String
+  paid          Boolean  @default(false)
+  encryptedKey  String?
+  amount        Int
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  key           VaultKey @relation(fields: [keyId], references: [id])
+  sender        User     @relation("SentShares", fields: [senderId], references: [id])
+  recipient     User?    @relation("ReceivedShares", fields: [recipientDid], references: [did])
+
+  @@index([recipientDid])
+  @@map("shares")
+}
+
+model BlockchainLog {
+  id        String   @id @default(uuid())
+  userDid   String
+  keyId     String
+  action    String   // CREATE, UPDATE, DELETE, SHARE, REVOKE
+  txHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([userDid])
+  @@index([keyId])
+  @@map("blockchain_logs")
+}
