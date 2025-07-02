@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const redis = require('../config/redis');
 
+// Middleware d'authentification JWT avec vérification de blacklist Redis
 module.exports = async function (req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'Token manquant' });
